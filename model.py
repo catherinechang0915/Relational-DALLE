@@ -67,6 +67,7 @@ class BasicModel(nn.Module):
         pred = output.data.max(1)[1]
         correct = pred.eq(label.data).cpu().sum()
         accuracy = correct * 100. / len(label)
+        del input_img, input_qst, label, output, pred
         return accuracy, loss
         
     def test_(self, input_img, input_qst, label):
@@ -75,6 +76,7 @@ class BasicModel(nn.Module):
         pred = output.data.max(1)[1]
         correct = pred.eq(label.data).cpu().sum()
         accuracy = correct * 100. / len(label)
+        del input_img, input_qst, label, output, pred
         return accuracy, loss
 
     def save_model(self, epoch):
