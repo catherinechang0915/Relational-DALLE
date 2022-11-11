@@ -1,12 +1,15 @@
+import clip
 import cv2
 import numpy as np
 import os
 import random
+import torch
 
 from config import (
     TRAIN_DATA_GEN_DIR, VAL_DATA_GEN_DIR, TEST_DATA_GEN_DIR, 
     TRAIN_DATA_SIZE, VAL_DATA_SIZE, TEST_DATA_SIZE, 
-    IMAGE_SIZE, OBJECT_SIZE
+    IMAGE_SIZE, OBJECT_SIZE,
+    CLIP_MODEL
 )
 
 '''
@@ -25,6 +28,10 @@ colors = [
 ]
 
 color_to_word = ['red', 'green', 'blue', 'orange', 'gray', 'yellow']
+
+# clip model
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+model, preprocess = clip.load(CLIP_MODEL, device=device)
 
 # Helper function to create a center and shape avoiding collisions
 def shape_generate(objects):
@@ -46,16 +53,20 @@ def save_dataset(img_data, qst_data, ans_data, dirpath):
     Save all answers as a single .npy file.
     '''
     img_dir = os.path.join(dirpath, 'images')
+    qst_dir = os.path.join(dirpath, 'questions')
     if not os.path.exists(dirpath):
         os.makedirs(dirpath)
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
+    if not os.path.exists(qst_dir):
+        os.makedirs(qst_dir)
     
     for idx, img in enumerate(img_data):
         filepath = os.path.join(img_dir, '{:05d}'.format(idx))
         np.save(filepath, img)
-    with open(os.path.join(dirpath, 'questions.txt'),  'w+') as f:
-        f.write('\n'.join(qst_data) + '\n')
+    for idx, qst in enumerate(qst_data):
+        filepath = os.path.join(qst_dir, '{:05d}'.format(idx))
+        np.save(filepath, qst)
     np.save(os.path.join(dirpath, 'answers'), np.array(ans_data))
 
 def build_dataset(n, dirpath):
@@ -123,7 +134,11 @@ def build_dataset(n, dirpath):
             if (c1_y < c2_y and i <= 1) or (c1_y > c2_y and i > 1):
                 ans = 1
             # data.append((img, s, ans))
-            qst_data.append(s)
+            # encode sentence use clip
+            s_token = clip.tokenize(s).to(device)
+            with torch.no_grad():
+                s_encoded = model.encode_text(s_token)
+            qst_data.append(s_encoded.cpu().numpy())
             ans_data.append(ans)
     
     # write to file
