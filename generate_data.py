@@ -1,3 +1,9 @@
+"""
+@Author: Vishaal Agartha
+@Date: 10/23/2022
+@Links: https://colab.research.google.com/drive/1neyIg69oAwzCUECPoZhaq5YSXR3eJxm7
+"""
+
 import clip
 import cv2
 import numpy as np
