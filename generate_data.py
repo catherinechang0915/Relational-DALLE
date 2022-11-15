@@ -71,6 +71,8 @@ def save_dataset(img_data, qst_data, ans_data, sentence_data, dirpath):
     for idx, img in enumerate(img_data):
         filepath = os.path.join(img_dir, '{:05d}'.format(idx))
         np.save(filepath, img)
+    with open(os.path.join(dirpath, 'sentences.txt'),  'w+') as f:
+        f.write('\n'.join(s_data) + '\n')
     for idx, qst in enumerate(qst_data):
         filepath = os.path.join(qst_dir, '{:05d}'.format(idx))
         np.save(filepath, qst)
@@ -121,7 +123,7 @@ def build_dataset(n, dirpath):
                 end = (center[0]+OBJECT_SIZE, center[1]+OBJECT_SIZE)
                 cv2.rectangle(img, start, end, colors[color], -1)
             else:
-                cv2.circle(img, center, OBJECT_SIZE, colors[color], -1)
+                cv2.circle(img, tuple(center), OBJECT_SIZE, colors[color], -1)
         img_data.append(img)
 
         # Generate sentences
@@ -143,6 +145,7 @@ def build_dataset(n, dirpath):
         s4 = f'The {color_to_word[c1]} {c1_shape_word} is {below_word} the {color_to_word[c2]} {c2_shape_word}.'
         questions = [q1, q2, q3, q4]
         sentences = [s1, s2, s3, s4]
+        questions = [q1, q2, q3, q4]
         
         for i, s in enumerate(sentences):
             ans = 0
@@ -150,16 +153,22 @@ def build_dataset(n, dirpath):
             if (c1_y < c2_y and i <= 1) or (c1_y > c2_y and i > 1):
                 ans = 1
             # data.append((img, s, ans))
+            s_data.append(s)
             # encode sentence use clip
-            s_token = clip.tokenize(s).to(device)
+            q = questions[i]
+            q_token = clip.tokenize(q).to(device)
             with torch.no_grad():
-                s_encoded = model.encode_text(s_token)
-            qst_data.append(s_encoded.cpu().numpy())
+                q_encoded = model.encode_text(q_token)
+            qst_data.append(q_encoded.cpu().numpy())
             ans_data.append(ans)
             sentence_data += sentences
     
     # write to file
+<<<<<<< HEAD
     save_dataset(img_data, qst_data, ans_data, sentence_data, dirpath)   
+=======
+    save_dataset(img_data, s_data, qst_data, ans_data, dirpath)   
+>>>>>>> 4b5f9f2de90e5743e278f61ebb5e6bf969981cbc
   
 if __name__ == '__main__':
     build_dataset(TRAIN_DATA_SIZE, TRAIN_DATA_GEN_DIR)
