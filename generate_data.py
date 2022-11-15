@@ -52,7 +52,7 @@ def shape_generate(objects):
             shape = 'r' if random.random() < .5 else 'c'
             return center, shape
 
-def save_dataset(img_data, qst_data, ans_data, dirpath):
+def save_dataset(img_data, s_data, qst_data, ans_data, dirpath):
     '''
     Save each image as a .npy file. 
     Save all questions as a single .txt file.
@@ -70,13 +70,15 @@ def save_dataset(img_data, qst_data, ans_data, dirpath):
     for idx, img in enumerate(img_data):
         filepath = os.path.join(img_dir, '{:05d}'.format(idx))
         np.save(filepath, img)
+    with open(os.path.join(dirpath, 'sentences.txt'),  'w+') as f:
+        f.write('\n'.join(s_data) + '\n')
     for idx, qst in enumerate(qst_data):
         filepath = os.path.join(qst_dir, '{:05d}'.format(idx))
         np.save(filepath, qst)
     np.save(os.path.join(dirpath, 'answers'), np.array(ans_data))
 
 def build_dataset(n, dirpath):
-    img_data, qst_data, ans_data = [], [], []
+    img_data, s_data, qst_data, ans_data = [], [], [], []
     for _ in range(n):
         c1 = random.randint(0,5)
         c2 = random.randint(0,5)
@@ -116,7 +118,7 @@ def build_dataset(n, dirpath):
                 end = (center[0]+OBJECT_SIZE, center[1]+OBJECT_SIZE)
                 cv2.rectangle(img, start, end, colors[color], -1)
             else:
-                cv2.circle(img, center, OBJECT_SIZE, colors[color], -1)
+                cv2.circle(img, tuple(center), OBJECT_SIZE, colors[color], -1)
         img_data.append(img)
 
         # Generate sentences
@@ -128,11 +130,16 @@ def build_dataset(n, dirpath):
         # Choose 'above' synonym and 'below' synonym
         above_word = above_syn[random.randint(0, len(above_syn)-1)]
         below_word = below_syn[random.randint(0, len(below_syn)-1)]
-        s1 = f'Is the {color_to_word[c1]} {c1_shape_word} {above_word} the {color_to_word[c2]} {c2_shape_word}?'
-        s2 = f'Is the {color_to_word[c2]} {c2_shape_word} {below_word} the {color_to_word[c1]} {c1_shape_word}?'
-        s3 = f'Is the {color_to_word[c2]} {c2_shape_word} {above_word} the {color_to_word[c1]} {c1_shape_word}?'
-        s4 = f'Is the {color_to_word[c1]} {c1_shape_word} {below_word} the {color_to_word[c2]} {c2_shape_word}?'
+        s1 = f'The {color_to_word[c1]} {c1_shape_word} is {above_word} the {color_to_word[c2]} {c2_shape_word}.'
+        s2 = f'The {color_to_word[c2]} {c2_shape_word} is {below_word} the {color_to_word[c1]} {c1_shape_word}.'
+        s3 = f'The {color_to_word[c2]} {c2_shape_word} is {above_word} the {color_to_word[c1]} {c1_shape_word}.'
+        s4 = f'The {color_to_word[c1]} {c1_shape_word} is {below_word} the {color_to_word[c2]} {c2_shape_word}.'
+        q1 = f'Is the {color_to_word[c1]} {c1_shape_word} {above_word} the {color_to_word[c2]} {c2_shape_word}?'
+        q2 = f'Is the {color_to_word[c2]} {c2_shape_word} {below_word} the {color_to_word[c1]} {c1_shape_word}?'
+        q3 = f'Is the {color_to_word[c2]} {c2_shape_word} {above_word} the {color_to_word[c1]} {c1_shape_word}?'
+        q4 = f'Is the {color_to_word[c1]} {c1_shape_word} {below_word} the {color_to_word[c2]} {c2_shape_word}?'
         sentences = [s1, s2, s3, s4]
+        questions = [q1, q2, q3, q4]
         
         for i, s in enumerate(sentences):
             ans = 0
@@ -140,15 +147,17 @@ def build_dataset(n, dirpath):
             if (c1_y < c2_y and i <= 1) or (c1_y > c2_y and i > 1):
                 ans = 1
             # data.append((img, s, ans))
+            s_data.append(s)
             # encode sentence use clip
-            s_token = clip.tokenize(s).to(device)
+            q = questions[i]
+            q_token = clip.tokenize(q).to(device)
             with torch.no_grad():
-                s_encoded = model.encode_text(s_token)
-            qst_data.append(s_encoded.cpu().numpy())
+                q_encoded = model.encode_text(q_token)
+            qst_data.append(q_encoded.cpu().numpy())
             ans_data.append(ans)
     
     # write to file
-    save_dataset(img_data, qst_data, ans_data, dirpath)   
+    save_dataset(img_data, s_data, qst_data, ans_data, dirpath)   
   
 if __name__ == '__main__':
     build_dataset(TRAIN_DATA_SIZE, TRAIN_DATA_GEN_DIR)
