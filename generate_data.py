@@ -52,11 +52,12 @@ def shape_generate(objects):
             shape = 'r' if random.random() < .5 else 'c'
             return center, shape
 
-def save_dataset(img_data, qst_data, ans_data, dirpath):
+def save_dataset(img_data, qst_data, ans_data, sentence_data, dirpath):
     '''
     Save each image as a .npy file. 
     Save all questions as a single .txt file.
     Save all answers as a single .npy file.
+    Save all sentences as a single .txt file.
     '''
     img_dir = os.path.join(dirpath, 'images')
     qst_dir = os.path.join(dirpath, 'questions')
@@ -74,9 +75,13 @@ def save_dataset(img_data, qst_data, ans_data, dirpath):
         filepath = os.path.join(qst_dir, '{:05d}'.format(idx))
         np.save(filepath, qst)
     np.save(os.path.join(dirpath, 'answers'), np.array(ans_data))
+    with open(os.path.join(dirpath, 'sentences.txt'), 'w+') as f:
+        for s in sentence_data:
+            f.write(s + '\n')
+
 
 def build_dataset(n, dirpath):
-    img_data, qst_data, ans_data = [], [], []
+    img_data, qst_data, ans_data, sentence_data = [], [], [], []
     for _ in range(n):
         c1 = random.randint(0,5)
         c2 = random.randint(0,5)
@@ -128,10 +133,15 @@ def build_dataset(n, dirpath):
         # Choose 'above' synonym and 'below' synonym
         above_word = above_syn[random.randint(0, len(above_syn)-1)]
         below_word = below_syn[random.randint(0, len(below_syn)-1)]
-        s1 = f'Is the {color_to_word[c1]} {c1_shape_word} {above_word} the {color_to_word[c2]} {c2_shape_word}?'
-        s2 = f'Is the {color_to_word[c2]} {c2_shape_word} {below_word} the {color_to_word[c1]} {c1_shape_word}?'
-        s3 = f'Is the {color_to_word[c2]} {c2_shape_word} {above_word} the {color_to_word[c1]} {c1_shape_word}?'
-        s4 = f'Is the {color_to_word[c1]} {c1_shape_word} {below_word} the {color_to_word[c2]} {c2_shape_word}?'
+        q1 = f'Is the {color_to_word[c1]} {c1_shape_word} {above_word} the {color_to_word[c2]} {c2_shape_word}?'
+        q2 = f'Is the {color_to_word[c2]} {c2_shape_word} {below_word} the {color_to_word[c1]} {c1_shape_word}?'
+        q3 = f'Is the {color_to_word[c2]} {c2_shape_word} {above_word} the {color_to_word[c1]} {c1_shape_word}?'
+        q4 = f'Is the {color_to_word[c1]} {c1_shape_word} {below_word} the {color_to_word[c2]} {c2_shape_word}?'
+        s1 = f'The {color_to_word[c1]} {c1_shape_word} is {above_word} the {color_to_word[c2]} {c2_shape_word}.'
+        s2 = f'The {color_to_word[c2]} {c2_shape_word} is {below_word} the {color_to_word[c1]} {c1_shape_word}.'
+        s3 = f'The {color_to_word[c2]} {c2_shape_word} is {above_word} the {color_to_word[c1]} {c1_shape_word}.'
+        s4 = f'The {color_to_word[c1]} {c1_shape_word} is {below_word} the {color_to_word[c2]} {c2_shape_word}.'
+        questions = [q1, q2, q3, q4]
         sentences = [s1, s2, s3, s4]
         
         for i, s in enumerate(sentences):
@@ -146,9 +156,10 @@ def build_dataset(n, dirpath):
                 s_encoded = model.encode_text(s_token)
             qst_data.append(s_encoded.cpu().numpy())
             ans_data.append(ans)
+            sentence_data += sentences
     
     # write to file
-    save_dataset(img_data, qst_data, ans_data, dirpath)   
+    save_dataset(img_data, qst_data, ans_data, sentence_data, dirpath)   
   
 if __name__ == '__main__':
     build_dataset(TRAIN_DATA_SIZE, TRAIN_DATA_GEN_DIR)
