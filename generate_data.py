@@ -72,14 +72,11 @@ def save_dataset(img_data, qst_data, ans_data, sentence_data, dirpath):
         filepath = os.path.join(img_dir, '{:05d}'.format(idx))
         np.save(filepath, img)
     with open(os.path.join(dirpath, 'sentences.txt'),  'w+') as f:
-        f.write('\n'.join(s_data) + '\n')
+        f.write('\n'.join(sentence_data) + '\n')
     for idx, qst in enumerate(qst_data):
         filepath = os.path.join(qst_dir, '{:05d}'.format(idx))
         np.save(filepath, qst)
     np.save(os.path.join(dirpath, 'answers'), np.array(ans_data))
-    with open(os.path.join(dirpath, 'sentences.txt'), 'w+') as f:
-        for s in sentence_data:
-            f.write(s + '\n')
 
 
 def build_dataset(n, dirpath):
@@ -152,8 +149,6 @@ def build_dataset(n, dirpath):
             # c1 is above c2: s1, s2 correct. s3, s4 incorrect; c2 is above c1: s1, s2 incorrect. s3, s4 correct
             if (c1_y < c2_y and i <= 1) or (c1_y > c2_y and i > 1):
                 ans = 1
-            # data.append((img, s, ans))
-            s_data.append(s)
             # encode sentence use clip
             q = questions[i]
             q_token = clip.tokenize(q).to(device)
@@ -164,13 +159,12 @@ def build_dataset(n, dirpath):
             sentence_data += sentences
     
     # write to file
-<<<<<<< HEAD
     save_dataset(img_data, qst_data, ans_data, sentence_data, dirpath)   
-=======
-    save_dataset(img_data, s_data, qst_data, ans_data, dirpath)   
->>>>>>> 4b5f9f2de90e5743e278f61ebb5e6bf969981cbc
   
 if __name__ == '__main__':
+    print("Building training dataset...")
     build_dataset(TRAIN_DATA_SIZE, TRAIN_DATA_GEN_DIR)
+    print("Building validation dataset...")
     build_dataset(VAL_DATA_SIZE, VAL_DATA_GEN_DIR)
+    print("Building test dataset...")
     build_dataset(TEST_DATA_SIZE, TEST_DATA_GEN_DIR)
