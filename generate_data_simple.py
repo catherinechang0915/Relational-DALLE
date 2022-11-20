@@ -3,7 +3,6 @@
 @Date: 11/17/2022
 """
 
-import clip
 import cv2
 import numpy as np
 import os
@@ -20,7 +19,11 @@ from config import (
 Generate Dataset
 Logic based off of Sort Of Clevr Dataset generation
 '''
-QUESTION_SIZE = 12
+QUESTION_SIZE = 16
+O1_OFFSET = 0
+O1_SHAPE_OFFSET = 6
+O2_OFFSET = 8
+O2_SHAPE_OFFSET = 14
 colors = [
     (0,0,255),##r
     (0,255,0),##g
@@ -29,7 +32,6 @@ colors = [
     (128,128,128),##k
     (0,255,255)##y
 ]
-
 
 def save_dataset(img_data, qst_data, ans_data, dirpath):
     '''
@@ -85,7 +87,6 @@ def build_dataset(n, dirpath):
                 center_ = (center[0], center[1])
                 cv2.circle(img, center_, OBJECT_SIZE, color, -1)
                 objects.append((color_id,center,'c'))
-
         binary_questions = []
         binary_answers = []
         """Binary Relational questions"""
@@ -94,19 +95,25 @@ def build_dataset(n, dirpath):
                 question = [0]*QUESTION_SIZE
                 """
                 Question encoding:
-                0-5 correspond to each color, circle
-                6-12 correspond to each color, rectangle
-                13, 14 correspond to question type
-                [RC, GC, BC, OC, KC, YC, RR, GR, BR, OR, KR, YR]
+                0-5 correspond to o1 color
+                6-7 correspond to o1 shape
+
+                8-14 correspond to o2 color
+                14-15 correspond to o2 shape
+                [R, G, B, O, K, Y, circle, rectangle, R, G, B, O, K, Y, circle, rectangle]
                 """
                 o1_c, o1_center, o1_shape = objects[i]
                 o2_c, o2_center, o2_shape = objects[j]
 
-                o1_idx = o1_c if o1_shape == 'c' else o1_c + 6
-                o2_idx = o2_c if o2_shape == 'c' else o2_c + 6
+                # Encode color
+                question[O1_OFFSET + o1_c] = 1
+                question[O2_OFFSET + o2_c] = 1
 
-                question[o1_idx] = 1
-                question[o2_idx] = 1
+                # Encode shape
+                o1_shape_idx = 0 if o1_shape == 'c' else 1
+                o2_shape_idx = 0 if o2_shape == 'c' else 1
+                question[O1_SHAPE_OFFSET + o1_shape_idx] = 1
+                question[O2_SHAPE_OFFSET + o2_shape_idx] = 1
 
                 # Question asks "Is <o1> above <o2>?"
                 """Answer : [yes, no]"""
