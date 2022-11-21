@@ -23,5 +23,5 @@ class SortOfClevrDataset(Dataset):
     def __getitem__(self, idx):
         image = self.images[idx // 15]
         text = self.questions[idx]
-        y = self.answers[idx]
+        y = self.answers[idx][0]
         return torch.tensor(image).float(), torch.tensor(text).squeeze(0), torch.tensor(y)
