@@ -93,10 +93,10 @@ class RN(BasicModel):
         
         if self.relation_type == 'ternary':
             ##(number of filters per object+coordinate of object)*3+question vector
-            self.g_fc1 = nn.Linear((24+2)*3+512, 256)
+            self.g_fc1 = nn.Linear((24+2)*3+16, 256)
         else:
             ##(number of filters per object+coordinate of object)*2+question vector
-            self.g_fc1 = nn.Linear((24+2)*2+512, 256)
+            self.g_fc1 = nn.Linear((24+2)*2+16, 256)
 
         self.g_fc2 = nn.Linear(256, 256)
         self.g_fc3 = nn.Linear(256, 256)
@@ -114,14 +114,14 @@ class RN(BasicModel):
 
         # prepare coord tensor
         def cvt_coord(i):
-            return [(i/5-2)/2., (i%5-2)/2.]
+            return [(i/4-2)/2., (i%4-2)/2.]
         
-        self.coord_tensor = torch.FloatTensor(args['batch_size'], 25, 2)
+        self.coord_tensor = torch.FloatTensor(args['batch_size'], 16, 2)
         if args['cuda']:
             self.coord_tensor = self.coord_tensor.cuda()
         self.coord_tensor = Variable(self.coord_tensor)
-        np_coord_tensor = np.zeros((args['batch_size'], 25, 2))
-        for i in range(25):
+        np_coord_tensor = np.zeros((args['batch_size'], 16, 2))
+        for i in range(16):
             np_coord_tensor[:,i,:] = np.array( cvt_coord(i) )
         self.coord_tensor.data.copy_(torch.from_numpy(np_coord_tensor))
 
@@ -133,7 +133,7 @@ class RN(BasicModel):
 
     def forward(self, img, qst):
         x = self.conv(img) ## x = (64 x 24 x 5 x 5)
-        
+
         """g"""
         mb = x.size()[0]
         n_channels = x.size()[1]
@@ -148,47 +148,47 @@ class RN(BasicModel):
         if self.relation_type == 'ternary':
             # add question everywhere
             qst = torch.unsqueeze(qst, 1) # (64x1x18)
-            qst = qst.repeat(1, 25, 1) # (64x25x18)
+            qst = qst.repeat(1, 16, 1) # (64x25x18)
             qst = torch.unsqueeze(qst, 1)  # (64x1x25x18)
             qst = torch.unsqueeze(qst, 1)  # (64x1x1x25x18)
 
             # cast all triples against each other
             x_i = torch.unsqueeze(x_flat, 1)  # (64x1x25x26)
             x_i = torch.unsqueeze(x_i, 3)  # (64x1x25x1x26)
-            x_i = x_i.repeat(1, 25, 1, 25, 1)  # (64x25x25x25x26)
+            x_i = x_i.repeat(1, 16, 1, 16, 1)  # (64x25x25x25x26)
             
             x_j = torch.unsqueeze(x_flat, 2)  # (64x25x1x26)
             x_j = torch.unsqueeze(x_j, 2)  # (64x25x1x1x26)
-            x_j = x_j.repeat(1, 1, 25, 25, 1)  # (64x25x25x25x26)
+            x_j = x_j.repeat(1, 1, 16, 16, 1)  # (64x25x25x25x26)
 
             x_k = torch.unsqueeze(x_flat, 1)  # (64x1x25x26)
             x_k = torch.unsqueeze(x_k, 1)  # (64x1x1x25x26)
             x_k = torch.cat([x_k, qst], 4)  # (64x1x1x25x26+18)
-            x_k = x_k.repeat(1, 25, 25, 1, 1)  # (64x25x25x25x26+18)
+            x_k = x_k.repeat(1, 16, 16, 1, 1)  # (64x25x25x25x26+18)
 
             # concatenate all together
             x_full = torch.cat([x_i, x_j, x_k], 4)  # (64x25x25x25x3*26+18)
 
             # reshape for passing through network
-            x_ = x_full.view(mb * (d * d) * (d * d) * (d * d), 96)  # (64*25*25*25x3*26+18) = (1.000.000, 96)
+            x_ = x_full.view(mb * (d * d) * (d * d) * (d * d), 94)  # (64*25*25*25x3*26+16) = (1.000.000, 96)
         else:
             # add question everywhere
             qst = torch.unsqueeze(qst, 1)
-            qst = qst.repeat(1, 25, 1)
+            qst = qst.repeat(1, 16, 1)
             qst = torch.unsqueeze(qst, 2)
 
             # cast all pairs against each other
             x_i = torch.unsqueeze(x_flat, 1)  # (64x1x25x26+18)
-            x_i = x_i.repeat(1, 25, 1, 1)  # (64x25x25x26+18)
+            x_i = x_i.repeat(1, 16, 1, 1)  # (64x25x25x26+18)
             x_j = torch.unsqueeze(x_flat, 2)  # (64x25x1x26+18)
             x_j = torch.cat([x_j, qst], 3)
-            x_j = x_j.repeat(1, 1, 25, 1)  # (64x25x25x26+18)
+            x_j = x_j.repeat(1, 1, 16, 1)  # (64x25x25x26+18)
             
             # concatenate all together
             x_full = torch.cat([x_i,x_j],3) # (64x25x25x2*26+18)
         
             # reshape for passing through network
-            x_ = x_full.view(mb * (d * d) * (d * d), 564)  # (64*25*25x2*26+512) = (40.000, 564)
+            x_ = x_full.view(mb * (d * d) * (d * d), 68)  # (64*25*25x2*26+16) = (40.000, 564)
             
         x_ = self.g_fc1(x_)
         x_ = F.relu(x_)
