@@ -1,4 +1,5 @@
 numpy
 opencv-python
-torch
+torch==1.10.0
 torchvision
+dalle_pytorch

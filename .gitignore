@@ -133,5 +133,7 @@ model/
 
 # Data directory
 data*
-
 data/
+
+# outputs directory
+outputs/
