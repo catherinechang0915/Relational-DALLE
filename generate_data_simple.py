@@ -33,7 +33,9 @@ colors = [
     (0,255,255)##y
 ]
 
-def save_dataset(img_data, qst_data, ans_data, dirpath):
+index_to_color = ['red', 'green', 'blue', 'orange', 'gray', 'yellow']
+
+def save_dataset(img_data, qst_data, ans_data, sentence_data, dirpath):
     '''
     Save each image as a .npy file. 
     Save all questions as a single .txt file.
@@ -56,6 +58,10 @@ def save_dataset(img_data, qst_data, ans_data, dirpath):
     for idx, qst in enumerate(qst_data):
         filepath = os.path.join(qst_dir, '{:05d}'.format(idx))
         np.save(filepath, qst)
+
+    with open(os.path.join(dirpath, 'sentences.txt'),  'w+') as f:
+        f.write('\n'.join(sentence_data) + '\n')
+
     np.save(os.path.join(dirpath, 'answers'), np.array(ans_data))
 
 def center_generate(objects):
@@ -73,6 +79,7 @@ def build_dataset(n, dirpath):
     img_data = []
     qst_data = []
     ans_data = []
+    sentence_data = []
     for _ in range(n):
         objects = []
         img = np.ones((IMAGE_SIZE,IMAGE_SIZE,3)) * 255
@@ -118,11 +125,20 @@ def build_dataset(n, dirpath):
                 # Question asks "Is <o1> above <o2>?"
                 """Answer : [yes, no]"""
                 if o1_center[1]<o2_center[1]:
+                    sentence = f"A {index_to_color[o1_c]} "
+                    sentence = sentence + "circle " if o1_shape == 'c' else sentence + "rectangle "
+                    sentence += f"is above a {index_to_color[o2_c]} "
+                    sentence = sentence + "circle." if o2_shape == 'c' else sentence + "rectangle."
                     answer = [1, 0]
                 else:
+                    sentence = f"A {index_to_color[o2_c]} "
+                    sentence = sentence + "circle " if o2_shape == 'c' else sentence + "rectangle "
+                    sentence += f"is above a {index_to_color[o1_c]} "
+                    sentence = sentence + "circle." if o1_shape == 'c' else sentence + "rectangle."
                     answer = [0, 1]
                 binary_questions.append(question)
                 binary_answers.append(answer)
+                sentence_data.append(sentence)
 
 
         img = img/255
@@ -132,7 +148,7 @@ def build_dataset(n, dirpath):
     img_data = np.array(img_data)
     qst_data = np.array(qst_data)
     ans_data = np.array(ans_data)
-    save_dataset(img_data, qst_data, ans_data, dirpath)   
+    save_dataset(img_data, qst_data, ans_data, sentence_data, dirpath)   
 
 
 if __name__ == '__main__':
