@@ -36,6 +36,7 @@ def train():
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True)
+    print("Train: {}, val: {}, test: {}".format(len(train_dataset), len(val_dataset), len(test_dataset)))
     print("==== Data Loading END ==== ")
 
     # create model

@@ -13,7 +13,10 @@ python generate_data.py
 ```
 
 ## Train
-Modify the data directory to where data were saved, modify configuration in `TRAIN_CONFIG` in `config.py`
+Modify configuration in `config.py`. Modify the data directory 
+`TRAIN_DIR`, `VAL_DIR`, `TEST_DIR` to where the dataset were saved. Modify `MODEL_DIR` to
+where you want the best performance models to be saved. Training details are specified in `TRAIN_CONFIG`. 
+Do not change `relation_type`.
 ```
 python train.py
 ```

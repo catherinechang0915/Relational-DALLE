@@ -10,14 +10,16 @@ OBJECT_SIZE = 5
 CLIP_MODEL = 'ViT-B/32'
 
 # Data Loader
-TRAIN_DIR = 'data/train'
-VAL_DIR = 'data/val'
-TEST_DIR = 'data/test'
+TRAIN_DIR = '/mnt/data/data/train'
+VAL_DIR = '/mnt/data/data/val'
+TEST_DIR = '/mnt/data/data/test'
+# model saving
+MODEL_DIR = '/mnt/data/model'
 
 # train configuration
 TRAIN_CONFIG = {
     'batch_size': 64,
-    'epochs': 10,
-    'lr': 1e-3,
-    'relation_type': 'binary'
+    'epochs': 40,
+    'lr': 1e-4,
+    'relation_type': 'ternary'
 }

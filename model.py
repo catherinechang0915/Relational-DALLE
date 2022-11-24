@@ -1,12 +1,14 @@
 # model implementation from https://github.com/kimhc6028/relational-networks/blob/master/model.py
 
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
 
+from config import MODEL_DIR
 
 class ConvInputModel(nn.Module):
     def __init__(self):
@@ -80,7 +82,9 @@ class BasicModel(nn.Module):
         return accuracy, loss
 
     def save_model(self, epoch):
-        torch.save(self.state_dict(), 'model/epoch_{}_{:02d}.pth'.format(self.name, epoch))
+        if not os.path.exists(MODEL_DIR):
+            os.makedirs(MODEL_DIR)
+        torch.save(self.state_dict(), os.path.join(MODEL_DIR, 'epoch_{}_{:02d}.pth'.format(self.name, epoch)))
 
 
 class RN(BasicModel):
