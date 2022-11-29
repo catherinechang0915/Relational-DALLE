@@ -23,3 +23,5 @@ TRAIN_CONFIG = {
     'lr': 1e-4,
     'relation_type': 'ternary'
 }
+
+WANDB_KEY = None

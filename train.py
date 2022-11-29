@@ -2,10 +2,16 @@ import torch
 import torch.utils.data
 from dataset import SortOfClevrDataset
 
-from config import TRAIN_DIR, VAL_DIR, TEST_DIR, TRAIN_CONFIG
+from config import TRAIN_DIR, VAL_DIR, TEST_DIR, TRAIN_CONFIG, WANDB_KEY
 from model import RN
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+arch_string = """
+Insert your architecture description here
+"""
+arch = "Insert your arch name here"
+arch_file = arch+".txt"
 
 def evaluate(model, dataloader):
     model.eval()
@@ -25,6 +31,19 @@ def evaluate(model, dataloader):
 def train():
     TRAIN_CONFIG['cuda'] = (device == 'cuda')
     batch_size = TRAIN_CONFIG['batch_size']
+    if WANDB_KEY:
+        import wandb
+        wandb.login(key=WANDB_KEY)
+        with open(arch_file, "w") as f:
+            f.write(arch_string)
+
+        run = wandb.init(
+            name=arch,
+            reinit = True, ### Allows reinitalizing runs when you re-run this cell
+            project = "RelationalNetwork", ### Project should be created in your wandb account.
+            entity = "11-785-deep-learning", 
+        )
+        wandb.save(arch_file)
 
     print("Training with config", TRAIN_CONFIG)
 
@@ -59,6 +78,9 @@ def train():
             total_train_acc += train_acc
             total_train_loss += train_loss
             del input_img, input_qst, label, train_loss
+
+        curr_lr = float(model.optimizer.param_groups[0]['lr'])
+
         print("Train \t Accuracy: {} \t Loss: {}".format(
             total_train_acc / len(train_loader), 
             total_train_loss / len(train_loader)
@@ -67,6 +89,16 @@ def train():
         # validation
         val_acc, val_loss = evaluate(model, val_loader)
         print("Val \t Accuracy: {} \t Loss: {}".format(val_acc, val_loss))
+
+        if WANDB_KEY:
+            wandb.log({
+                "epoch": epoch,
+                "train_accuracy": total_train_acc / len(train_loader),
+                "train_loss":  total_train_loss / len(train_loader),
+                "val_accuracy": val_acc,
+                "val_loss": val_loss,
+                "lr": curr_lr
+            })
         
         # save model
         if val_acc > best_acc:
@@ -74,6 +106,9 @@ def train():
             model.save_model(epoch)
         
     print("==== Training END ====")
+
+    if WANDB_KEY:
+        run.finish()
     
     # test
     test_acc, test_loss = evaluate(model, test_loader)
