@@ -70,6 +70,7 @@ class RelationalDalle(torch.nn.Module):
             for text_chunk in text_tokens.split(batch_size):
                 output_img = self.dalle.generate_images(text_chunk, filter_thres = 0.9)
                 transformed_image = self.image_transform(output_img)
+                # transformed image is (1, 3, 64, 64), question is (1, 16)
                 rn_out = self.rn(transformed_image, question)
                 is_correct = rn_out.data.max(1)[1].item()
                 if is_correct:
@@ -104,4 +105,4 @@ if __name__ == '__main__':
         for l in lines:
             if j%10==0:
                 print(j, "of 250")
-            dalle.generate_images(l, output_dir_name=output_dir)
+            dalle.generate_images(l.strip(), output_dir_name=output_dir, num_images=1)
