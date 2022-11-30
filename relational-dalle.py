@@ -89,18 +89,19 @@ class RelationalDalle(torch.nn.Module):
 if __name__ == '__main__':
     dalle = RelationalDalle()
     f = open("../dalle-test.txt", "r")
-    l = [
-        ["../data/angela", f[:250]],
-        ["../data/vishaal", f[250:500]],
-        ["../data/adrian", f[500:750]],
-        ["../data/ruimeng", f[750:]]
+    lines = f.readlines()
+    d = [
+        ["../data/angela", lines[:250]],
+        ["../data/vishaal", lines[250:500]],
+        ["../data/adrian", lines[500:750]],
+        ["../data/ruimeng", lines[750:]]
     ]
-    for i in l:
-        output_dir = l[0]
-        lines = l[1]
-        i = 0
+    for i in d:
+        output_dir = i[0]
+        lines = i[1]
+        j = 0
         print("generating images in", output_dir)
         for l in lines:
-            if i%10==0:
-                print(i, "of 250")
+            if j%10==0:
+                print(j, "of 250")
             dalle.generate_images(l, output_dir_name=output_dir)
