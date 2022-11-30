@@ -56,7 +56,7 @@ def save_dataset(img_data, qst_data, ans_data, sentence_data, dirpath):
         np.save(filepath, img)
 
     for idx, qst in enumerate(qst_data):
-        filepath = os.path.join(qst_dir, '{:05d}'.format(idx))
+        filepath = os.path.join(qst_dir, '{:06d}'.format(idx))
         np.save(filepath, qst)
 
     with open(os.path.join(dirpath, 'sentences.txt'),  'w+') as f:
