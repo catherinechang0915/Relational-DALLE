@@ -53,6 +53,8 @@ class FCOutputModel(nn.Module):
         x = F.relu(x)
         x = F.dropout(x)
         x = self.fc3(x)
+        if len(x.shape) == 1:
+            x = x.unsqueeze(0)
         return F.log_softmax(x, dim=1)
 
 class BasicModel(nn.Module):
@@ -210,11 +212,11 @@ class RN(BasicModel):
             x_g = x_.view(mb, (d * d) * (d * d), 256)
 
         x_g = x_g.sum(1).squeeze()
-        
+
         """f"""
         x_f = self.f_fc1(x_g)
         x_f = F.relu(x_f)
-        
+
         return self.fcout(x_f)
 
 

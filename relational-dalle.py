@@ -1,11 +1,12 @@
 import torch
 from torchvision.utils import save_image
+from torchvision import transforms
 from dalle_pytorch import OpenAIDiscreteVAE, DALLE
 from dalle_pytorch.tokenizer import tokenizer
 from pathlib import Path
 from einops import repeat
 from model import RN
-from config import TRAIN_CONFIG
+from config import TRAIN_CONFIG, IMAGE_SIZE
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 TRAIN_CONFIG['cuda'] = (device == 'cuda')
@@ -29,6 +30,8 @@ class RelationalDalle(torch.nn.Module):
 
         self.rn = RN(TRAIN_CONFIG).cuda()
         self.rn.load_state_dict(rn_obj)
+        self.image_transform = transforms.Compose([transforms.Resize((IMAGE_SIZE,IMAGE_SIZE))])
+
 
     def sentence_to_question(self, sentence):
         """
@@ -48,14 +51,14 @@ class RelationalDalle(torch.nn.Module):
         o1_color_idx = index_to_color.index(words[1])
         o1_shape_idx = 6 if words[2] == 'circle' else 7
         o2_color_idx = index_to_color.index(words[6]) + 8
-        o2_shape_idx = 14 if words[6] == 'circle' else 15
+        o2_shape_idx = 14 if words[7] == 'circle' else 15
 
         question = [0]*16
         question[o1_color_idx] = 1
         question[o1_shape_idx] = 1
         question[o2_color_idx] = 1
         question[o2_shape_idx] = 1
-        return question
+        return torch.tensor([question]).to(device)
 
     def generate_images(self, text, batch_size=64, output_dir_name='./outputs', num_images=3):
         text_tokens = tokenizer.tokenize([text], self.dalle.text_seq_len).cuda()
@@ -63,17 +66,14 @@ class RelationalDalle(torch.nn.Module):
 
         outputs = []
         question = self.sentence_to_question(text)
-        for text_chunk in text_tokens.split(batch_size):
-            output_img = self.dalle.generate_images(text_chunk, filter_thres = 0.9)
-            rn_out = self.rn(output_img, question)
-            """
-            Insert RN here.
-            Pseudocode:
-            rn_out = RN(output, text_check)
-            if rn_out == 1: # image correctly represents text
-                add to output                
-            """
-            outputs.append(output)
+        while len(outputs) != num_images:
+            for text_chunk in text_tokens.split(batch_size):
+                output_img = self.dalle.generate_images(text_chunk, filter_thres = 0.9)
+                transformed_image = self.image_transform(output_img)
+                rn_out = self.rn(transformed_image, question)
+                is_correct = rn_out.data.max(1)[1].item()
+                if is_correct:
+                    outputs.append(output_img)
 
         Path(output_dir_name).mkdir(parents = True, exist_ok = True)
         file_name = f"{text.replace(' ', '_')[:(100)]}.png"
@@ -88,5 +88,19 @@ class RelationalDalle(torch.nn.Module):
 
 if __name__ == '__main__':
     dalle = RelationalDalle()
-    sentence = "A green circle is above a red rectangle."
-    dalle.generate_images(lines[0], num_images=1)
+    f = open("../dalle-test.txt", "r")
+    l = [
+        ["../data/angela", f[:250]],
+        ["../data/vishaal", f[250:500]],
+        ["../data/adrian", f[500:750]],
+        ["../data/ruimeng", f[750:]]
+    ]
+    for i in l:
+        output_dir = l[0]
+        lines = l[1]
+        i = 0
+        print("generating images in", output_dir)
+        for l in lines:
+            if i%10==0:
+                print(i, "of 250")
+            dalle.generate_images(l, output_dir_name=output_dir)
