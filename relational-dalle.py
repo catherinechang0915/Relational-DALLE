@@ -6,13 +6,13 @@ from dalle_pytorch.tokenizer import tokenizer
 from pathlib import Path
 from einops import repeat
 from model import RN
-from config import TRAIN_CONFIG, IMAGE_SIZE
+from config import TRAIN_CONFIG, IMAGE_SIZE, DALLE_PATH, RN_PATH
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 TRAIN_CONFIG['cuda'] = (device == 'cuda')
 
 class RelationalDalle(torch.nn.Module):
-    def __init__(self, dalle_path='./trained_models/dalle.pth', rn_path='./trained_models/rn.pth'):
+    def __init__(self, dalle_path=DALLE_PATH, rn_path=RN_PATH):
         super().__init__()
         # load DALL-E and RN
         dalle_path = Path(dalle_path)
