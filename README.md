@@ -29,6 +29,12 @@ Models have been pretrained for your convenience. They can be found at the links
 
 [Pretrained RN (33 epochs)](https://drive.google.com/file/d/1kruA8lPV6uULFf7nD4h4M1ryf1JKHsqY/view?usp=sharing)
 
-## Reference
+## References
 
-Relational Network logic: https://github.com/kimhc6028/relational-networks
+[DALL-E Implementation](https://github.com/lucidrains/DALLE-pytorch)
+
+[DALL-E Paper](https://arxiv.org/pdf/2102.12092.pdf)
+
+[Relational Network Implementation](https://github.com/kimhc6028/relational-networks)
+
+[Relational Network Paper](https://proceedings.neurips.cc/paper/2017/file/e6acf4b0f69f6f6e60e9a815938aa1ff-Paper.pdf)
