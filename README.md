@@ -28,3 +28,7 @@ Models have been pretrained for your convenience. They can be found at the links
 [Pretrained DALL-E (30 epochs)](https://drive.google.com/file/d/1eQJOClc_70oaPTH3bxHkpAZx_ZN1Z5nO/view?usp=sharing)
 
 [Pretrained RN (33 epochs)](https://drive.google.com/file/d/1kruA8lPV6uULFf7nD4h4M1ryf1JKHsqY/view?usp=sharing)
+
+## Reference
+
+Relational Network logic: https://github.com/kimhc6028/relational-networks
