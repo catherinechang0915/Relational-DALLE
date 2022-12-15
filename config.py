@@ -22,7 +22,6 @@ TRAIN_CONFIG = {
     'batch_size': 64,
     'epochs': 40,
     'lr': 1e-4,
-    'relation_type': 'ternary'
 }
 
 WANDB_KEY = None
