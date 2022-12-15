@@ -100,9 +100,6 @@ class RN(BasicModel):
         if self.relation_type == 'ternary':
             ##(number of filters per object+coordinate of object)*3+question vector
             self.g_fc1 = nn.Linear((24+2)*3+16, 256)
-        else:
-            ##(number of filters per object+coordinate of object)*2+question vector
-            self.g_fc1 = nn.Linear((24+2)*2+16, 256)
 
         self.g_fc2 = nn.Linear(256, 256)
         self.g_fc3 = nn.Linear(256, 256)
@@ -190,8 +187,6 @@ class RN(BasicModel):
         # reshape again and sum
         if self.relation_type == 'ternary':
             x_g = x_.view(mb, (d * d) * (d * d) * (d * d), 256)
-        else:
-            x_g = x_.view(mb, (d * d) * (d * d), 256)
 
         x_g = x_g.sum(1).squeeze()
 
