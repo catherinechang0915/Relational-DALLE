@@ -99,7 +99,6 @@ class RN(BasicModel):
         ##(number of filters per object+coordinate of object)*3+question vector
         self.g_fc1 = nn.Linear((24+2)*3+16, 256)
 
-
         self.g_fc2 = nn.Linear(256, 256)
         self.g_fc3 = nn.Linear(256, 256)
         self.g_fc4 = nn.Linear(256, 256)
