@@ -1,4 +1,4 @@
-# RelationClassifier
+# Relational DALLE
 
 ## Installation
 ```
@@ -33,7 +33,7 @@ Please note that this package requires `pytorch` version 1.10 or below to functi
 
 `$ python train_dalle.py --image_text_folder /path/to/data`
 
-Where we provided 150,000 image-text pairs. We used the default configuration provided in the package of Adam optimizer with a learning rate of `3e-4` and no scheduler.
+Where `train_dalle.py` was modified from the DALL-E implementation linked below. Our training dataset consisted of 150,000 image-text pairs. We used the default configuration provided in the package of Adam optimizer with a learning rate of `3e-4` and no scheduler.
 
 [Pretrained RN (33 epochs)](https://drive.google.com/file/d/1kruA8lPV6uULFf7nD4h4M1ryf1JKHsqY/view?usp=sharing)
 
