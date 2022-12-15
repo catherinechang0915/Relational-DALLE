@@ -9,14 +9,13 @@ VAL_DATA_SIZE = 1000
 TEST_DATA_SIZE = 1000
 IMAGE_SIZE = 64
 OBJECT_SIZE = 5
-CLIP_MODEL = 'ViT-B/32'
 
 # Data Loader
-TRAIN_DIR = '/mnt/data/data/train'
-VAL_DIR = '/mnt/data/data/val'
-TEST_DIR = '/mnt/data/data/test'
+TRAIN_DIR = 'data/train'
+VAL_DIR = 'data/val'
+TEST_DIR = 'data/test'
 # model saving
-MODEL_DIR = '/mnt/data/model'
+MODEL_DIR = 'data/model'
 
 # train configuration
 TRAIN_CONFIG = {
