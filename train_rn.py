@@ -1,8 +1,9 @@
 import torch
 import torch.utils.data
+import os
 from dataset import SortOfClevrDataset
 
-from config import TRAIN_DIR, VAL_DIR, TEST_DIR, TRAIN_CONFIG, WANDB_KEY
+from config import DATA_DIR, TRAIN_CONFIG, WANDB_KEY
 from model import RN
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -41,7 +42,7 @@ def train():
             name=arch,
             reinit = True, ### Allows reinitalizing runs when you re-run this cell
             project = "RelationalNetwork", ### Project should be created in your wandb account.
-            entity = "11-785-deep-learning", 
+            entity = "relational-dalle", 
         )
         wandb.save(arch_file)
 
@@ -49,9 +50,9 @@ def train():
 
     # create dataset and dataloader
     print("==== Data Loading START ====")
-    train_dataset = SortOfClevrDataset(TRAIN_DIR)
-    val_dataset = SortOfClevrDataset(VAL_DIR)
-    test_dataset = SortOfClevrDataset(TEST_DIR)
+    train_dataset = SortOfClevrDataset(os.path.join(DATA_DIR, 'rn', 'train'))
+    val_dataset = SortOfClevrDataset(os.path.join(DATA_DIR, 'rn', 'val'))
+    test_dataset = SortOfClevrDataset(os.path.join(DATA_DIR, 'rn', 'test'))
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True)

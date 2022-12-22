@@ -137,3 +137,9 @@ data/
 
 # outputs directory
 outputs/
+
+# saved models
+*.pt
+
+# wandb artifacts
+wandb/

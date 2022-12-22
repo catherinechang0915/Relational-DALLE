@@ -97,7 +97,7 @@ class RN(BasicModel):
         
         
         ##(number of filters per object+coordinate of object)*3+question vector
-        self.g_fc1 = nn.Linear((24+2)*3+16, 256)
+        self.g_fc1 = nn.Linear((24+2)*3+20, 256)
 
         self.g_fc2 = nn.Linear(256, 256)
         self.g_fc3 = nn.Linear(256, 256)
@@ -169,7 +169,7 @@ class RN(BasicModel):
         x_full = torch.cat([x_i, x_j, x_k], 4)  # (64x16x16x16x3*18+18)
 
         # reshape for passing through network
-        x_ = x_full.view(mb * (d * d) * (d * d) * (d * d), 94)  # (64*16*16*16x3*26+16) 
+        x_ = x_full.view(mb * (d * d) * (d * d) * (d * d), 98)  # (64*16*16*16x3*26+16) 
             
         x_ = self.g_fc1(x_)
         x_ = F.relu(x_)
