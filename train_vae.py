@@ -22,7 +22,7 @@ from torchvision.utils import make_grid, save_image
 from dalle_pytorch import DiscreteVAE
 
 # constants
-from config import WANDB_KEY, DATA_DIR, EPOCHS, BATCH_SIZE_VAE, LEARNING_RATE, LR_DECAY_RATE, NUM_TOKENS, NUM_LAYERS, NUM_RESNET_BLOCKS, EMB_DIM, HID_DIM, STARTING_TEMP, TEMP_MIN, ANNEAL_RATE, NUM_IMAGES_SAVE 
+from config import WANDB_KEY, DATA_DIR, MODEL_DIR, EPOCHS, BATCH_SIZE_VAE, LEARNING_RATE, LR_DECAY_RATE, NUM_TOKENS, NUM_LAYERS, NUM_RESNET_BLOCKS, EMB_DIM, HID_DIM, STARTING_TEMP, TEMP_MIN, ANNEAL_RATE, NUM_IMAGES_SAVE 
 
 
 
@@ -89,6 +89,9 @@ if WANDB_KEY:
         config = model_config
     )
 
+if not os.path.exists(MODEL_DIR):
+    os.makedirs(MODEL_DIR)
+    
 # starting temperature
 
 global_step = 0
@@ -131,9 +134,9 @@ for epoch in range(EPOCHS):
                     'temperature':          temp
                 }
 
-            save_model(f'./vae.pt')
+            save_model(f'{MODEL_DIR}/vae.pt')
             if WANDB_KEY:
-                wandb.save('./vae.pt')
+                wandb.save(f'{MODEL_DIR}/vae.pt')
 
             # temperature anneal
 
@@ -161,17 +164,17 @@ for epoch in range(EPOCHS):
     # save trained model to wandb as an artifact every epoch's end
     if WANDB_KEY:
         model_artifact = wandb.Artifact('trained-vae', type = 'model', metadata = dict(model_config))
-        model_artifact.add_file('vae.pt')
+        model_artifact.add_file(f'{MODEL_DIR}/vae.pt')
         run.log_artifact(model_artifact)
 
 # save final vae and cleanup
 
-save_model('./vae-final.pt')
+save_model(f'{MODEL_DIR}/vae_final.pt')
 if WANDB_KEY:
-    wandb.save('./vae-final.pt')
+    wandb.save(f'{MODEL_DIR}/vae_final.pt')
 
     model_artifact = wandb.Artifact('trained-vae', type = 'model', metadata = dict(model_config))
-    model_artifact.add_file('vae-final.pt')
+    model_artifact.add_file(f'{MODEL_DIR}/vae_final.pt')
     run.log_artifact(model_artifact)
 
     wandb.finish()

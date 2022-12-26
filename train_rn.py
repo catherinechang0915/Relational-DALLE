@@ -8,12 +8,6 @@ from model import RN
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-arch_string = """
-Insert your architecture description here
-"""
-arch = "Insert your arch name here"
-arch_file = arch+".txt"
-
 def evaluate(model, dataloader):
     model.eval()
     total_val_acc, total_val_loss = 0.0, 0.0
@@ -35,16 +29,12 @@ def train():
     if WANDB_KEY:
         import wandb
         wandb.login(key=WANDB_KEY)
-        with open(arch_file, "w") as f:
-            f.write(arch_string)
 
         run = wandb.init(
-            name=arch,
             reinit = True, ### Allows reinitalizing runs when you re-run this cell
             project = "RelationalNetwork", ### Project should be created in your wandb account.
-            entity = "relational-dalle", 
+            entity = "11-785-deep-learning", 
         )
-        wandb.save(arch_file)
 
     print("Training with config", TRAIN_CONFIG)
 
@@ -105,6 +95,8 @@ def train():
         if val_acc > best_acc:
             best_acc = val_acc
             model.save_model(epoch)
+            if WANDB_KEY:
+                wandb.save(os.path.join(MODEL_DIR, 'epoch_{}_{:02d}.pth'.format(self.name, epoch)))
         
     print("==== Training END ====")
 

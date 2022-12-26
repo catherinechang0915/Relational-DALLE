@@ -11,7 +11,6 @@ import random
 from config import (
     DATA_DIR,
     TRAIN_DATA_SIZE, VAL_DATA_SIZE, TEST_DATA_SIZE, 
-    DALLE_TRAIN_DATA_SIZE,
     IMAGE_SIZE, OBJECT_SIZE,
 )
 
@@ -24,8 +23,6 @@ O1_OFFSET = 0
 O1_SHAPE_OFFSET = 6
 O2_OFFSET = 8
 O2_SHAPE_OFFSET = 14
-IMAGE_SIZE = 64
-OBJECT_SIZE = 5
 QUESTION_OFFSET = 16
 COLORS = [
     (0,0,255),##r
@@ -49,11 +46,12 @@ def center_generate(objects):
     if pas:
       return center
 
-def build_dataset_rn(n_rn_examples):
+def build_dataset(n):
   img_data = []
   qst_data = []
   ans_data = []
-  while len(ans_data)<n_rn_examples:
+  sentence_data = []
+  for _ in range(n):
     objects = []
     img = np.ones((IMAGE_SIZE,IMAGE_SIZE,3)) * 255
     for color_id,color in enumerate(COLORS):  
@@ -69,6 +67,7 @@ def build_dataset_rn(n_rn_examples):
         objects.append((color_id,center,'c'))
     binary_questions = []
     binary_answers = []
+    sentences = []
     """Binary Relational questions"""
     for i in range(len(objects)):
       for j in range(i+1, len(objects)):
@@ -97,86 +96,66 @@ def build_dataset_rn(n_rn_examples):
         # Encode question type
         q_type = random.randint(0, 3)
         question[QUESTION_OFFSET+q_type] = 1
+
+        # Create sentence
+        sentence = f"A {IDX_TO_COLOR[o1_c]} "
+        sentence = sentence + "circle " if o1_shape == "c" else sentence + "rectangle "
+
         # Left
         if q_type == 0:
           # Question asks "Is <o1> left of <o2>?"
           if o1_center[0]<o2_center[0]:
-            answer = 1
+            sentence += "is left of "
+            answer = [1, 0]
           else:
-            answer = 0
+            sentence += "is right of "
+            answer = [0, 1]
         # Right
         elif q_type == 1:
-          # Question asks "Is <o1> left of <o2>?"
-          if o1_center[0]<o2_center[0]:
-            answer = 0
+          # Question asks "Is <o1> right of <o2>?"
+          if o1_center[0]>o2_center[0]:
+            sentence += "is right of "
+            answer = [1, 0]
           else:
-            answer = 1
+            sentence += "is left of "
+            answer = [0, 1]
         # Above
         elif q_type == 2:
           # Question asks "Is <o1> above <o2>?"
           if o1_center[1]<o2_center[1]:
-            answer = 1
+            sentence += "is above "
+            answer = [1, 0]
           else:
-            answer = 0
+            sentence += "is below "
+            answer = [0, 1]
         # Below
         else:
           # Question asks "Is <o1> below <o2>?"
-          if o1_center[1]<o2_center[1]:
-            answer = 0
+          if o1_center[1]>o2_center[1]:
+            sentence += "is below "
+            answer = [1, 0]
           else:
-            answer = 1
+            sentence += "is above "
+            answer = [0, 1]
 
+        sentence += f"a {IDX_TO_COLOR[o2_c]} "
+        sentence = sentence + "circle." if o2_shape == "c" else sentence + "rectangle."
+        sentences.append(sentence)
         binary_questions.append(question)
         binary_answers.append(answer)
-    img = img/255
-    img_data += [img] * len(binary_questions)
+
+    bgr_img = img/255
+    rgb_img = bgr_img[...,::-1].copy()
+    img_data.append(rgb_img)
+    sentence_data += sentences
     qst_data += binary_questions
     ans_data += binary_answers
-  img_data = np.array(img_data[:n_rn_examples])
-  qst_data = np.array(qst_data[:n_rn_examples])
-  ans_data = np.array(ans_data[:n_rn_examples])
-  return img_data, qst_data, ans_data
 
-def build_dataset_dalle(n_dalle_examples):
-  img_data = []
-  sentence_data = []
-  while len(sentence_data)<n_dalle_examples:
-    objects = []
-    img = np.ones((IMAGE_SIZE,IMAGE_SIZE,3)) * 255
-    for color_id,color in enumerate(COLORS):  
-      center = center_generate(objects)
-      if random.random()<0.5:
-        start = (center[0]-OBJECT_SIZE, center[1]-OBJECT_SIZE)
-        end = (center[0]+OBJECT_SIZE, center[1]+OBJECT_SIZE)
-        cv2.rectangle(img, start, end, color, -1)
-        objects.append((color_id,center,'r'))
-      else:
-        center_ = (center[0], center[1])
-        cv2.circle(img, center_, OBJECT_SIZE, color, -1)
-        objects.append((color_id,center,'c'))
-    o1, o2 = random.sample(objects, 2)
-    o1_c, o1_center, o1_shape = o1
-    o2_c, o2_center, o2_shape = o2
-    sentence = f"A {IDX_TO_COLOR[o1_c]} "
-    sentence = sentence + "circle " if o1_shape == 'c' else sentence + "rectangle "
-    # Choose between vertical and horizontal
-    if random.random()<0.5:
-      if o1_center[0]<o2_center[0]:
-        sentence += "is left of "
-      else:
-        sentence += "is right of "
-    else:
-      if o1_center[1]<o2_center[1]:
-        sentence += "is above "
-      else:
-        sentence += "is below "
-    sentence += f"a {IDX_TO_COLOR[o2_c]} "
-    sentence = sentence + "circle." if o2_shape == 'c' else sentence + "rectangle."
-    img = img/255
-    img_data.append(img)
-    sentence_data.append(sentence)
   img_data = np.array(img_data)
-  return img_data, sentence_data
+  qst_data = np.array(qst_data)
+  ans_data = np.array(ans_data)
+
+  return img_data, qst_data, ans_data, sentence_data
 
 def save_rn_data(dirpath, subpath, img_data, qst_data, ans_data):
   rn_dir_path = os.path.join(dirpath, 'rn')
@@ -195,11 +174,11 @@ def save_rn_data(dirpath, subpath, img_data, qst_data, ans_data):
     os.makedirs(qst_dir)
 
   for idx, img in enumerate(img_data):
-    filepath = os.path.join(img_dir, '{:05d}'.format(idx))
+    filepath = os.path.join(img_dir, '{:010d}'.format(idx))
     np.save(filepath, img)
 
   for idx, qst in enumerate(qst_data):
-    filepath = os.path.join(qst_dir, '{:06d}'.format(idx))
+    filepath = os.path.join(qst_dir, '{:010d}'.format(idx))
     np.save(filepath, qst)
   np.save(os.path.join(sub_dir, 'answers'), np.array(ans_data))
 
@@ -212,34 +191,32 @@ def save_dalle_data(dirpath, img_data, sentence_data):
     os.makedirs(dalle_dir_path)
   if not os.path.exists(img_dir):
     os.makedirs(img_dir)
-
+  sentence_idx = 0
   for idx, img in enumerate(img_data):
-    sub_dir = os.path.join(img_dir, '{:05d}'.format(idx))
+    sub_dir = os.path.join(img_dir, '{:010d}'.format(idx))
     if not os.path.exists(sub_dir):
       os.makedirs(sub_dir)
-    filepath = os.path.join(sub_dir, '{:05d}'.format(idx))
+    filepath = os.path.join(sub_dir, '{:010d}'.format(idx))
     np.save(filepath, img)
+    sentences = sentence_data[sentence_idx:sentence_idx + 15]
     with open(os.path.join(filepath+'.txt'),  'w+') as f:
-      f.write(sentence_data[idx] + '\n')
+      f.write('\n'.join(sentences))
+    sentence_idx += 15
 
 
 if __name__ == '__main__':
     print("Building training dataset...")
-    img_data, qst_data, ans_data = build_dataset_rn(TRAIN_DATA_SIZE)
+    img_data, qst_data, ans_data, sentence_data = build_dataset(TRAIN_DATA_SIZE)
     print("Saving training dataset...")
     save_rn_data(DATA_DIR, 'train', img_data, qst_data, ans_data)
+    save_dalle_data(DATA_DIR, img_data, sentence_data)
 
     print("Building val dataset...")
-    img_data, qst_data, ans_data = build_dataset_rn(VAL_DATA_SIZE)
+    img_data, qst_data, ans_data, _ = build_dataset(VAL_DATA_SIZE)
     print("Saving val dataset...")
     save_rn_data(DATA_DIR, 'val', img_data, qst_data, ans_data)
 
     print("Building test dataset...")
-    img_data, qst_data, ans_data = build_dataset_rn(TEST_DATA_SIZE)
+    img_data, qst_data, ans_data, _ = build_dataset(TEST_DATA_SIZE)
     print("Saving test dataset...")
     save_rn_data(DATA_DIR, 'test', img_data, qst_data, ans_data)
-
-    print("Building DALLE training dataset...")
-    dalle_img_data, sentence_data = build_dataset_dalle(DALLE_TRAIN_DATA_SIZE)
-    print("Saving DALLE training dataset...")
-    save_dalle_data(DATA_DIR, dalle_img_data, sentence_data)

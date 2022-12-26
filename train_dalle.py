@@ -59,7 +59,7 @@ if RESUME:
     IMAGE_SIZE = vae.image_size
 
 else:
-    if exists(VAE_PATH):
+    if VAE_PATH is not None:
         vae_path = Path(VAE_PATH)
         assert vae_path.exists(), 'VAE model file does not exist'
 
